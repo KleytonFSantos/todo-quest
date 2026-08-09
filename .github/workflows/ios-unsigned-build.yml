@@ -64,12 +64,28 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="" \
             clean build
 
+      # Always runs, even if the packaging step below fails — gives us the
+      # real on-disk layout to fix the search against, instead of guessing.
+      - name: Debug — list build output tree
+        if: always()
+        working-directory: ios
+        run: |
+          echo "----- ios/build tree (up to 6 levels deep) -----"
+          find build -maxdepth 6 2>/dev/null || echo "build/ does not exist at all"
+
       - name: Package as .ipa
         working-directory: ios
         run: |
-          APP_PATH=$(find build/Build/Products -maxdepth 2 -name "*.app" | head -n1)
+          # Search the whole derived-data tree (not just the expected
+          # Products/<Config>-iphoneos path) and match case-insensitively —
+          # more resilient to Xcode/RN layout differences across versions.
+          APP_PATH=$(find build -type d -iname "*.app" 2>/dev/null | head -n1)
           if [ -z "$APP_PATH" ]; then
-            echo "::error::Could not find the built .app bundle under build/Build/Products"
+            echo "Nothing under ios/build — falling back to a full search of ios/ (excluding Pods/)"
+            APP_PATH=$(find . -type d -iname "*.app" -not -path "*/Pods/*" 2>/dev/null | head -n1)
+          fi
+          if [ -z "$APP_PATH" ]; then
+            echo "::error::Could not find any .app bundle under ios/ — check the 'Debug — list build output tree' step above for the actual layout."
             exit 1
           fi
           echo "Found app bundle: $APP_PATH"
