@@ -51,6 +51,8 @@ jobs:
       - name: Build unsigned .app for a real device
         working-directory: ios
         run: |
+          echo "Using workspace='${{ steps.xcode-config.outputs.workspace }}' scheme='${{ steps.xcode-config.outputs.scheme }}'"
+          set +e
           xcodebuild \
             -workspace "${{ steps.xcode-config.outputs.workspace }}" \
             -scheme "${{ steps.xcode-config.outputs.scheme }}" \
@@ -62,16 +64,38 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE_SPECIFIER="" \
-            clean build
+            clean build 2>&1 | tee ../xcodebuild.log
+          XCODE_EXIT=${PIPESTATUS[0]}
+          echo "xcodebuild exit code: $XCODE_EXIT"
+          echo "----- last 40 lines of xcodebuild output -----"
+          tail -n 40 ../xcodebuild.log
+          if [ "$XCODE_EXIT" -ne 0 ] || ! grep -q "BUILD SUCCEEDED" ../xcodebuild.log; then
+            echo "::error::xcodebuild did not report BUILD SUCCEEDED (exit code $XCODE_EXIT) — see the full log in the uploaded xcodebuild-log artifact."
+            exit 1
+          fi
 
-      # Always runs, even if the packaging step below fails — gives us the
-      # real on-disk layout to fix the search against, instead of guessing.
-      - name: Debug — list build output tree
+      # Always runs, even if the build/packaging steps above failed — small
+      # and targeted so it never gets truncated when pasted into chat.
+      - name: Debug — inspect build output layout
         if: always()
         working-directory: ios
         run: |
-          echo "----- ios/build tree (up to 6 levels deep) -----"
-          find build -maxdepth 6 2>/dev/null || echo "build/ does not exist at all"
+          echo "----- ios/build (top level) -----"
+          ls -la build 2>/dev/null || echo "(build/ does not exist)"
+          echo "----- ios/build/Build (top level) -----"
+          ls -la build/Build 2>/dev/null || echo "(build/Build does not exist)"
+          echo "----- ios/build/Build/Products (up to 3 levels) -----"
+          find build/Build/Products -maxdepth 3 2>/dev/null || echo "(build/Build/Products does not exist)"
+          echo "----- any *.app anywhere under ios/build -----"
+          find build -type d -iname "*.app" 2>/dev/null || echo "(none found)"
+
+      - name: Upload xcodebuild log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: xcodebuild.log
+          retention-days: 14
 
       - name: Package as .ipa
         working-directory: ios
@@ -85,7 +109,7 @@ jobs:
             APP_PATH=$(find . -type d -iname "*.app" -not -path "*/Pods/*" 2>/dev/null | head -n1)
           fi
           if [ -z "$APP_PATH" ]; then
-            echo "::error::Could not find any .app bundle under ios/ — check the 'Debug — list build output tree' step above for the actual layout."
+            echo "::error::Could not find any .app bundle under ios/ — check the 'Debug — inspect build output layout' step above and the xcodebuild-log artifact."
             exit 1
           fi
           echo "Found app bundle: $APP_PATH"
