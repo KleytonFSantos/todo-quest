@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "TodoQuest",
+    "slug": "todo-gamify-pomodoro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#0F172A",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.kleyton.todogamifypomodoro"
+    },
+    "plugins": ["expo-notifications"],
+    "assetBundlePatterns": ["**/*"]
+  }
+}

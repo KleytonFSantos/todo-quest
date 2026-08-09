@@ -1,0 +1,16 @@
+export const palette = {
+  background: { light: "#F8FAFC", dark: "#0F172A" },
+  surface: { light: "#FFFFFF", dark: "#1E293B" },
+  surfaceAlt: { light: "#F1F5F9", dark: "#273449" },
+  text: { light: "#0F172A", dark: "#F1F5F9" },
+  textMuted: { light: "#64748B", dark: "#94A3B8" },
+  border: { light: "#E2E8F0", dark: "#334155" },
+  primary: "#22D3EE",
+  primaryDark: "#0891B2",
+  success: "#34D399",
+  warning: "#FBBF24",
+  danger: "#F87171",
+  priorityLow: "#60A5FA",
+  priorityMedium: "#FBBF24",
+  priorityHigh: "#F87171",
+};
