@@ -15,6 +15,56 @@ que só roda em macOS. Com Expo:
 - Quando quiser gerar um `.ipa` para a App Store, isso é feito na nuvem via
   **EAS Build** (`eas build --platform ios`), também sem precisar de um Mac.
 
+## Instalar no iPhone sem pagar Apple Developer Program (build não assinado + Sideloadly)
+
+Existe um workflow do GitHub Actions em
+[`.github/workflows/ios-unsigned-build.yml`](.github/workflows/ios-unsigned-build.yml)
+que compila um `.ipa` **sem assinatura** numa máquina macOS gratuita do
+GitHub, para você assinar depois com seu **Apple ID grátis** usando o
+[Sideloadly](https://sideloadly.io) direto do Windows. Nenhum Mac e nenhum
+pagamento à Apple são necessários.
+
+⚠️ Isso é uma técnica de comunidade (não é o caminho oficial da Expo/Apple).
+Eu não tenho como testar num Mac/iPhone real antes de te entregar, então é
+possível que o build falhe na primeira tentativa — se acontecer, me manda o
+log do passo que falhou (aba Actions → clique no run → abre o step
+vermelho) que eu ajusto.
+
+### Passo a passo
+
+1. **Crie um repositório no GitHub** (pode ser público — assim os minutos de
+   build em macOS são ilimitados e grátis; se for privado, você tem uma cota
+   mensal gratuita menor, mas geralmente suficiente para uso ocasional).
+2. Conecte este projeto local ao repositório e envie o código:
+   ```bash
+   git remote add origin https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
+   git branch -M main
+   git push -u origin main
+   ```
+   (o Git vai pedir para você autenticar com sua conta do GitHub na primeira
+   vez — normalmente abre uma janela do navegador para login)
+3. No GitHub, abra a aba **Actions** do repositório, selecione o workflow
+   **"iOS unsigned build (for Sideloadly)"** e clique em **"Run workflow"**.
+4. Aguarde a build terminar (leva uns 10–20 minutos). Ao final, baixe o
+   artifact **`TodoQuest-unsigned-ipa`** (é um `.zip` contendo o `.ipa` —
+   extraia para pegar o arquivo `.ipa`).
+5. No Windows, instale o **[Sideloadly](https://sideloadly.io)** e conecte
+   seu iPhone por cabo USB (pode pedir para instalar o driver da Apple, o
+   próprio instalador do Sideloadly cuida disso).
+6. Abra o Sideloadly, arraste o `.ipa` para dentro, informe seu **Apple ID**
+   (uma conta grátis normal — não precisa ser desenvolvedor) e clique em
+   **Start**. Se sua conta Apple tem verificação em duas etapas, use uma
+   ["senha de app"](https://support.apple.com/pt-br/102654) gerada em
+   appleid.apple.com em vez da sua senha normal.
+7. No iPhone, vá em **Ajustes → Geral → VPN e Gerenciamento de Dispositivo**
+   e toque em "Confiar" no perfil do seu Apple ID.
+8. Abra o app na tela inicial.
+
+**Limitação do Apple ID gratuito:** o app expira em 7 dias — depois disso,
+repita os passos 5–7 (não precisa gerar um `.ipa` novo, o mesmo arquivo
+serve, a menos que você tenha mudado o código). O Sideloadly também tem uma
+opção de auto-renovação via Wi-Fi enquanto o programa fica aberto no PC.
+
 ## Como rodar
 
 1. Instale o Node.js LTS (não estava instalado nesta máquina):
