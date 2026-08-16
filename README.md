@@ -65,6 +65,35 @@ repita os passos 5–7 (não precisa gerar um `.ipa` novo, o mesmo arquivo
 serve, a menos que você tenha mudado o código). O Sideloadly também tem uma
 opção de auto-renovação via Wi-Fi enquanto o programa fica aberto no PC.
 
+## Instalar no Android sem Play Store (build de debug via GitHub Actions)
+
+Existe também um workflow em
+[`.github/workflows/android-build.yml`](.github/workflows/android-build.yml)
+que gera um `.apk` instalável direto no seu celular Android, numa máquina
+Linux gratuita do GitHub (mais rápida e sem limite de minutos comparado à
+build do iOS, que precisa de macOS). Não precisa de conta de desenvolvedor
+nem de publicar na Play Store.
+
+### Passo a passo
+
+1. No GitHub, abra a aba **Actions**, selecione o workflow **"Android build
+   (installable APK)"** e clique em **"Run workflow"**.
+2. Aguarde a build terminar (geralmente uns 5–10 minutos). Baixe o artifact
+   **`TodoQuest-debug-apk`** (é um `.zip` contendo o `.apk` — extraia para
+   pegar o arquivo `.apk`).
+3. Transfira o `.apk` para o celular (cabo USB, e-mail, Google Drive, etc.).
+4. No Android, ao abrir o arquivo `.apk` pelo gerenciador de arquivos, o
+   sistema vai pedir para permitir "instalar apps de fontes desconhecidas"
+   para o app usado (ex.: Arquivos, Chrome) — autorize e confirme a
+   instalação.
+5. Abra o app na tela inicial.
+
+Esse `.apk` é assinado com a chave de debug padrão do Android (gerada
+automaticamente pelo Gradle) — funciona para instalar e usar normalmente no
+aparelho, mas **não deve ser usado para publicar na Play Store** (isso exige
+uma chave de release própria, ver `EAS Build` nos próximos passos). Diferente
+do Apple ID grátis no iOS, esse `.apk` **não expira em 7 dias**.
+
 ## Como rodar
 
 1. Instale o Node.js LTS (não estava instalado nesta máquina):

@@ -1,0 +1,62 @@
+name: Android build (installable APK)
+
+# Manual trigger only, same spirit as the iOS workflow — click "Run workflow"
+# on the Actions tab whenever you want a fresh .apk to install.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Setup Java (required by Gradle/Android build)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Generate native Android project (expo prebuild)
+        run: npx expo prebuild -p android --no-install
+        env:
+          CI: 1
+
+      # Debug builds are auto-signed by Gradle with a throwaway debug
+      # keystore, which Android happily installs on a real device — no
+      # Google Play, no paid developer account, no manual signing step
+      # needed. This is the Android equivalent of the unsigned .ipa +
+      # Sideloadly flow, just simpler because Android doesn't require the
+      # resign-on-another-machine dance iOS does.
+      - name: Build debug .apk
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Locate .apk
+        id: apk
+        run: |
+          APK_PATH=$(find android -type f -iname "*.apk" | head -n1)
+          if [ -z "$APK_PATH" ]; then
+            echo "::error::Could not find any .apk under android/ — check the build log above."
+            exit 1
+          fi
+          echo "Found: $APK_PATH"
+          echo "path=$APK_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload .apk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TodoQuest-debug-apk
+          path: ${{ steps.apk.outputs.path }}
+          retention-days: 14
